@@ -1,0 +1,126 @@
+// Measures in EU_Safety_Gate_Motor_Recalls.pbix (table _Measures unless noted).
+// Exported from the model with INFO.MEASURES() after applying FIXES.md (indentation tidied;
+// in the model, HeadlineInsight and ComponentInsight separate words with tab characters).
+
+// --- Volume -------------------------------------------------------------------------------
+
+Total Alerts = COUNTROWS('Recall')
+
+Serious Alerts = CALCULATE(COUNTROWS('Recall'), 'Recall'[Risk Level] = "Serious risk")
+
+Serious Risk % = DIVIDE([Serious Alerts], [Total Alerts], 0)
+
+Fire Alerts = CALCULATE([Total Alerts], FILTER('Recall', CONTAINSSTRING('Recall'[Hazard], "Fire")))
+
+Fire Alert % = DIVIDE([Fire Alerts], [Total Alerts])
+
+// Table AffectedCountries
+Airbag Alerts = CALCULATE([Total Alerts], 'Recall'[Component] = "Airbag / Restraints")
+
+Multi-Brand Alerts = CALCULATE([Total Alerts], 'Recall'[Multi-Brand Alert] = "Yes")
+
+Distinct Brands = DISTINCTCOUNT('Recall'[Brand])
+
+Distinct Models = DISTINCTCOUNT('Recall'[Model])
+
+Notifying Countries = DISTINCTCOUNT('Recall'[Notifying Country])
+
+Origin Countries = DISTINCTCOUNT('Recall'[Origin Country])
+
+% of All Alerts = DIVIDE([Total Alerts], CALCULATE([Total Alerts], ALLSELECTED()))
+
+// --- Geography ----------------------------------------------------------------------------
+
+Downstream Country Exposure = COUNTROWS('AffectedCountries')
+
+Avg Countries Affected = DIVIDE([Downstream Country Exposure], [Total Alerts])
+
+// --- Data quality -------------------------------------------------------------------------
+
+Missing Description % =
+DIVIDE(CALCULATE([Total Alerts], 'Recall'[Has Description] = "No"), [Total Alerts])
+
+Classified Component % =
+DIVIDE(
+    CALCULATE([Total Alerts], NOT 'Recall'[Component] IN {"Other (unmatched)", "Not classified (no description)"}),
+    [Total Alerts])
+
+// --- Time ---------------------------------------------------------------------------------
+
+Alerts LY =
+VAR CY = SELECTEDVALUE('DimYear'[Year])
+RETURN IF(NOT ISBLANK(CY),
+    CALCULATE([Total Alerts], REMOVEFILTERS('DimYear'), 'DimYear'[Year] = CY - 1))
+
+YoY % =
+VAR CY = SELECTEDVALUE('DimYear'[Year])
+RETURN IF(CY < YEAR(TODAY()), DIVIDE([Total Alerts] - [Alerts LY], [Alerts LY]))
+
+YoY Change = IF(SELECTEDVALUE('DimYear'[Year]) < YEAR(TODAY()), [Total Alerts] - [Alerts LY])
+
+// --- Brands / Top N -----------------------------------------------------------------------
+
+Top N Value = SELECTEDVALUE('Top N'[Top N], 10)
+
+Brand Rank =
+IF(NOT ISBLANK([Total Alerts]),
+    RANKX(ALLSELECTED('Recall'[Brand]), [Total Alerts], , DESC, DENSE))
+
+Alerts (Top N) = IF([Brand Rank] <= [Top N Value], [Total Alerts])
+
+Top 10 Brand Share =
+DIVIDE(
+    CALCULATE([Total Alerts], KEEPFILTERS(TOPN(10, ALLSELECTED('Recall'[Brand]), [Total Alerts], DESC))),
+    CALCULATE([Total Alerts], ALLSELECTED('Recall'[Brand])))
+
+// --- Text ---------------------------------------------------------------------------------
+
+Dynamic Title =
+VAR B = IF(HASONEVALUE('Recall'[Brand]), SELECTEDVALUE('Recall'[Brand]), "All Brands")
+VAR Y = IF(HASONEVALUE('DimYear'[Year]), FORMAT(SELECTEDVALUE('DimYear'[Year]), "0000"), "2016-2026")
+VAR V = IF(HASONEVALUE('Recall'[Vehicle Category]), SELECTEDVALUE('Recall'[Vehicle Category]), "All Vehicle Types")
+RETURN "EU Motor Vehicle Recall Alerts   |   " & B & "   |   " & V & "   |   " & Y
+
+Brand Chart Title =
+"Top " & [Top N Value] & " brands account for " &
+FORMAT(
+    DIVIDE(
+        CALCULATE([Total Alerts], KEEPFILTERS(TOPN([Top N Value], ALLSELECTED('Recall'[Brand]), [Total Alerts], DESC))),
+        CALCULATE([Total Alerts], ALLSELECTED('Recall'[Brand]))),
+    "0.0%") & " of all alerts"
+
+HeadlineInsight =
+VAR TotalA = [Total Alerts]
+VAR TopBrandTable = TOPN(1, ALLSELECTED('Recall'[Brand]), [Total Alerts], DESC)
+VAR TopBrandName = MAXX(TopBrandTable, 'Recall'[Brand])
+VAR TopBrandAlerts = MAXX(TopBrandTable, [Total Alerts])
+RETURN
+IF(ISBLANK(TotalA), "No alerts match the current selection.",
+    FORMAT(TotalA, "#,0") & " alerts in scope. Largest contributor: " & TopBrandName &
+    " with " & FORMAT(TopBrandAlerts, "#,0") & " (" & FORMAT(DIVIDE(TopBrandAlerts, TotalA), "0.0%") & ").")
+
+ComponentInsight =
+VAR TopComp = TOPN(1, ALLSELECTED('Recall'[Component]), [Total Alerts], DESC)
+VAR CompName = MAXX(TopComp, 'Recall'[Component])
+VAR CompAlerts = MAXX(TopComp, [Total Alerts])
+RETURN "Leading component family: " & CompName & " (" & FORMAT(CompAlerts, "#,0") &
+    " alerts). " & FORMAT([Missing Description %], "0.0%") &
+    " of records carry no defect description and cannot be classified."
+
+Geography Insight =
+VAR TopNotifier = MAXX(TOPN(1, ALLSELECTED('Recall'[Notifying Country]), [Total Alerts], DESC), 'Recall'[Notifying Country])
+VAR TopOrigin = MAXX(TOPN(1, ALLSELECTED('Recall'[Origin Country]), [Total Alerts], DESC), 'Recall'[Origin Country])
+RETURN TopNotifier & " raises the most alerts, while the most common country of origin is " & TopOrigin &
+    ". Notification and origin are not the same thing."
+
+Trend Insight =
+VAR CY = SELECTEDVALUE('DimYear'[Year])
+VAR Y = [YoY %]
+RETURN SWITCH(TRUE(),
+    ISBLANK(CY), "Showing all years. Select a single year for the year-on-year comparison.",
+    CY = YEAR(TODAY()), FORMAT(CY, "0000") & " is a partial year, so year-on-year is suppressed.",
+    ISBLANK(Y), "No comparable prior year available.",
+    Y > 0, "Alerts rose " & FORMAT(Y, "0.0%") & " against " & FORMAT(CY - 1, "0000") & ".",
+    "Alerts fell " & FORMAT(ABS(Y), "0.0%") & " against " & FORMAT(CY - 1, "0000") & ".")
+
+Report Generated = "Report generated " & FORMAT(NOW(), "dd MMM yyyy HH:mm")
