@@ -1,0 +1,2 @@
+# Power Query (M) scripts, not Mathematica: keep them out of the language stats
+*.m linguist-detectable=false
