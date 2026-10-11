@@ -34,7 +34,11 @@ let
     MultiBrand = Table.AddColumn(WithYear, "Multi-Brand Alert", each if Text.Contains([Brand] ?? "", ",") then "Yes" else "No", type text),
     FirstBrand = Table.TransformColumns(MultiBrand, {{"Brand", each Text.Trim(Text.BeforeDelimiter(_ ?? "", ",")), type text}}),
     BrandFixes = {{"Bmw", "BMW"}, {"Vw", "VW"}, {"Ktm", "KTM"}, {"Daf", "DAF"}, {"Man", "MAN"},
-                  {"AUDI", "Audi"}, {"CITROEN", "Citroen"}, {"NEW HOLLAND", "New Holland"}, {"VOLVO TRUCKS", "Volvo Trucks"}},
+                  {"AUDI", "Audi"}, {"CITROEN", "Citroen"}, {"NEW HOLLAND", "New Holland"}, {"VOLVO TRUCKS", "Volvo Trucks"},
+                  // one alert lists the brand as a numbered list; Range Rover is a Land Rover model
+                  {"1. Land Rover 2. Range Rover", "Land Rover"},
+                  // 12 alerts have no brand in the export
+                  {"", "Not specified"}},
     Brands = List.Accumulate(BrandFixes, FirstBrand, (t, fix) => Table.ReplaceValue(t, fix{0}, fix{1}, Replacer.ReplaceValue, {"Brand"})),
 
     // Case-insensitive "does the text mention any of these words?"

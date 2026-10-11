@@ -49,7 +49,7 @@ With no filters selected, the cards should show:
 | Total Alerts | 4,184 |
 | Serious Risk % | 97.9% |
 | Fire Alert % | 19.9% |
-| Distinct Brands | 444 |
+| Distinct Brands | 443 |
 | Airbag Alerts | 199 |
 | Missing Description % | 20.0% |
 | Classified Component % | 24.0% |
@@ -71,3 +71,13 @@ Selecting **2021** in the year slicer should show **548** alerts.
 | `Bike Airbag Alerts` filtered on `"Airbag"`, a label that doesn't exist | Card was blank | Filter on `"Airbag / Restraints"` |
 | Text replace `Man → MAN` on brand names | `Mann+Hummel` became `MANN+HUMMEL` | Whole-value brand fixes |
 | Vehicle rules missed "Lorry", "Pickup", "Camper van", "Motorcycle tyre" | 579 vehicles in "other" | Ordered, case-insensitive rules: 64 in "Other" |
+
+## Later polish (11 October 2026)
+
+| Issue | Fix |
+|---|---|
+| 12 alerts have no brand, shown as a blank brand | Labelled "Not specified" (brand count unchanged) |
+| One brand typed as "1. Land Rover 2. Range Rover" | Mapped to "Land Rover"; Distinct Brands 444 → **443** |
+| Total Alerts card showed "4K" (the card visual has no display-units option) | Card shows `Total Alerts Label = FORMAT([Total Alerts], "#,0", "de-DE")`, matching the report's German number format |
+| A duplicate Total Alerts / Airbag Alerts card covered the vehicle-category donut on Overview | Removed (both values are in the KPI row) |
+| Donut labels showed "0K" / "3K" | Data-label display units set to None on both donuts |

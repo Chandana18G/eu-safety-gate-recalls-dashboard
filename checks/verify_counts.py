@@ -16,7 +16,8 @@ import pandas as pd
 DATA = Path(__file__).resolve().parent.parent / "data" / "safety_gate_motor_vehicles_2026-08-02.xlsx"
 
 BRAND_FIXES = {"Bmw": "BMW", "Vw": "VW", "Ktm": "KTM", "Daf": "DAF", "Man": "MAN", "AUDI": "Audi",
-               "CITROEN": "Citroen", "NEW HOLLAND": "New Holland", "VOLVO TRUCKS": "Volvo Trucks"}
+               "CITROEN": "Citroen", "NEW HOLLAND": "New Holland", "VOLVO TRUCKS": "Volvo Trucks",
+               "1. Land Rover 2. Range Rover": "Land Rover", "": "Not specified"}
 
 VEHICLE_RULES = [  # first match wins, same order as Recall.m
     ("Component / Part", ["tyre", "tire", "part", "component", "helmet"]),

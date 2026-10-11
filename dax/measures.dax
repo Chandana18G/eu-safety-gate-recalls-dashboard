@@ -6,6 +6,9 @@
 
 Total Alerts = COUNTROWS('Recall')
 
+// Text version for the Overview card, which has no display-units setting and would show "4K"
+Total Alerts Label = FORMAT([Total Alerts], "#,0", "de-DE")
+
 Serious Alerts = CALCULATE(COUNTROWS('Recall'), 'Recall'[Risk Level] = "Serious risk")
 
 Serious Risk % = DIVIDE([Serious Alerts], [Total Alerts], 0)

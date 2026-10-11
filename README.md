@@ -18,7 +18,7 @@ Every headline number on the report is recomputed independently in Python
 | Busiest year | **2021**, 548 alerts (+16.1% on 2020) |
 | Rated "Serious risk" | **97.9%** of alerts |
 | Fire as a hazard | **19.9%** of alerts |
-| Brands | **444** distinct brands; Mercedes-Benz has the most alerts (477) |
+| Brands | **443** distinct brands; Mercedes-Benz has the most alerts (477); 12 alerts name no brand |
 | Notifying country | Germany raises **2,504** of the 4,184 alerts (59.8%) |
 | Country of origin | Germany (1,316), France (747), Japan (299) |
 | Spread | an alert lists **6.27** other affected countries on average |
@@ -48,12 +48,12 @@ no notification date, so the year comes from the alert number (`A12/0028/17` →
 ## How it is built
 
 - **Power Query** ([`power-query/`](power-query/)): `Recall` cleans the export (header rows,
-  trimming, brand spelling, first brand of multi-brand alerts) and derives the year, vehicle
+  trimming, brand spelling, first brand of multi-brand alerts, "Not specified" for the 12 alerts without one) and derives the year, vehicle
   category and defective component with ordered, case-insensitive keyword rules.
   `AffectedCountries` splits the "also found in" list into one row per alert and country.
 - **Model**: `Recall` (fact), `AffectedCountries` (many → one on alert number), `DimYear`
   (one → many on year), plus `Top N` and `Analyse By` helper tables for the slicers.
-- **DAX** ([`dax/measures.dax`](dax/measures.dax)): 30 measures, including year-on-year that is
+- **DAX** ([`dax/measures.dax`](dax/measures.dax)): 31 measures, including year-on-year that is
   suppressed for the partial current year, dynamic titles and text insights.
 - **Theme**: [`MOTOR_Executive_Theme.json`](MOTOR_Executive_Theme.json).
 
